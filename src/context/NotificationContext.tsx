@@ -32,6 +32,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     const savedNotifications = localStorage.getItem('notifications');
     if (savedNotifications) {
       try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const parsedNotifications = JSON.parse(savedNotifications).map((notification: any) => ({
           ...notification,
           timestamp: new Date(notification.timestamp)
@@ -61,6 +62,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         addNotification(notification);
       });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -123,6 +125,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useNotifications = () => {
   const context = useContext(NotificationContext);
   if (context === undefined) {

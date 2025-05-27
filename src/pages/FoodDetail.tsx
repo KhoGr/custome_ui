@@ -1,14 +1,22 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Star, ShoppingCart, MessageSquare } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import {
+  Button,
+  Input,
+  Rate,
+  Image,
+  Card,
+  Divider,
+  Form,
+  Typography,
+  message,
+} from "antd";
+import { ShoppingCartOutlined, MessageOutlined } from "@ant-design/icons";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { FoodItem } from "@/components/FoodCard";
+
+const { Title, Text, Paragraph } = Typography;
 
 type Review = {
   id: number;
@@ -18,8 +26,7 @@ type Review = {
   date: string;
 };
 
-// Mock data for reviews
-const mockReviews = [
+const mockReviews: Review[] = [
   {
     id: 1,
     name: "Nguyễn Văn A",
@@ -43,9 +50,7 @@ const mockReviews = [
   }
 ];
 
-// Mock data for food items
-const foodItems = [
-  // Appetizers
+const foodItems: FoodItem[] = [
   {
     id: 1,
     name: "Gỏi cuốn tôm thịt",
@@ -53,7 +58,8 @@ const foodItems = [
     price: 85000,
     image: "https://images.unsplash.com/photo-1553701275-1d6118df773e?q=80&w=2070",
     category: "appetizers",
-    fullDescription: "Gỏi cuốn tôm thịt là một món ăn truyền thống của Việt Nam, bao gồm tôm, thịt heo, bún, rau sống và các loại rau thơm khác được cuộn trong bánh tráng. Món ăn này thường được phục vụ kèm với nước chấm đặc biệt làm từ tương đen, đậu phộng nghiền và ớt tươi."
+    fullDescription:
+      "Gỏi cuốn tôm thịt là một món ăn truyền thống của Việt Nam..."
   },
   {
     id: 2,
@@ -62,9 +68,8 @@ const foodItems = [
     price: 120000,
     image: "https://images.unsplash.com/photo-1594756202469-9ff9799b2e4e?q=80&w=2035",
     category: "appetizers",
-    fullDescription: "Súp hải sản của chúng tôi được chế biến từ những nguyên liệu hải sản tươi ngon nhất, bao gồm tôm, mực, sò điệp và các loại hải sản khác. Món súp này được nấu trong nước dùng đậm đà với rau củ và gia vị đặc biệt, tạo nên hương vị thơm ngon khó cưỡng."
-  },
-  // ... Thêm các món ăn khác với fullDescription
+    fullDescription: "Súp hải sản được chế biến từ tôm, mực, sò điệp..."
+  }
 ];
 
 const FoodDetail = () => {
@@ -73,73 +78,40 @@ const FoodDetail = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [quantity, setQuantity] = useState(1);
   const [newReview, setNewReview] = useState({ name: "", rating: 5, comment: "" });
-  const { toast } = useToast();
-  
+
   useEffect(() => {
-    // Trong thực tế, đây là nơi bạn sẽ gọi API để lấy chi tiết món ăn
-    const foodItem = foodItems.find(item => item.id === Number(id));
-    if (foodItem) {
-      setItem(foodItem as FoodItem);
-    }
-    
-    // Load reviews
+    const foodItem = foodItems.find((f) => f.id === Number(id));
+    if (foodItem) setItem(foodItem);
     setReviews(mockReviews);
   }, [id]);
 
   const handleAddToCart = () => {
     if (!item) return;
-    
-    // Lấy giỏ hàng hiện tại từ localStorage
     const savedCart = localStorage.getItem("cart");
+    // eslint-disable-next-line prefer-const
     let currentCart = savedCart ? JSON.parse(savedCart) : [];
-    
-    // Kiểm tra xem món ăn đã có trong giỏ hàng chưa
-    const existingItemIndex = currentCart.findIndex((cartItem: any) => cartItem.item.id === item.id);
-    
-    if (existingItemIndex > -1) {
-      currentCart[existingItemIndex].quantity += quantity;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const existingIndex = currentCart.findIndex((cartItem: any) => cartItem.item.id === item.id);
+    if (existingIndex > -1) {
+      currentCart[existingIndex].quantity += quantity;
     } else {
       currentCart.push({ item, quantity });
     }
-    
-    // Lưu giỏ hàng vào localStorage
     localStorage.setItem("cart", JSON.stringify(currentCart));
-    
-    toast({
-      title: "Đã thêm vào giỏ hàng",
-      description: `${quantity} x ${item.name}`,
-    });
-    
-    // Reset số lượng
+    message.success(`${quantity} x ${item.name} đã được thêm vào giỏ hàng`);
     setQuantity(1);
   };
 
-  const handleSubmitReview = (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleSubmitReview = () => {
     if (!newReview.name.trim() || !newReview.comment.trim()) {
-      toast({
-        title: "Vui lòng điền đầy đủ thông tin",
-        description: "Tên và nội dung đánh giá không được để trống",
-        variant: "destructive",
-      });
+      message.error("Vui lòng điền đầy đủ thông tin đánh giá");
       return;
     }
-    
     const today = new Date().toISOString().split("T")[0];
-    const newReviewItem = {
-      id: reviews.length + 1,
-      ...newReview,
-      date: today,
-    };
-    
-    setReviews([newReviewItem, ...reviews]);
+    const review = { id: reviews.length + 1, ...newReview, date: today };
+    setReviews([review, ...reviews]);
     setNewReview({ name: "", rating: 5, comment: "" });
-    
-    toast({
-      title: "Cảm ơn bạn đã đánh giá!",
-      description: "Đánh giá của bạn đã được ghi nhận",
-    });
+    message.success("Cảm ơn bạn đã gửi đánh giá!");
   };
 
   if (!item) {
@@ -155,170 +127,112 @@ const FoodDetail = () => {
   }
 
   const averageRating = reviews.length
-    ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+    ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
     : 0;
 
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
-      
       <main className="flex-grow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="mb-6">
-            <Link to="/menu" className="text-primary hover:underline">
-              &larr; Quay lại thực đơn
-            </Link>
-          </div>
-          
-          <div className="grid md:grid-cols-2 gap-8">
-            <div className="rounded-lg overflow-hidden shadow-md">
-              <img 
-                src={item.image} 
-                alt={item.name} 
-                className="w-full h-[400px] object-cover"
-              />
-            </div>
-            
-            <div className="space-y-4">
-              <h1 className="text-3xl font-bold">{item.name}</h1>
-              
-              <div className="flex items-center gap-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star 
-                    key={star}
-                    className={`h-5 w-5 ${star <= Math.round(averageRating) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-                  />
-                ))}
-                <span className="text-sm text-gray-500">
-                  ({reviews.length} đánh giá)
-                </span>
-              </div>
-              
-              <div className="text-2xl font-bold text-primary">
+        <div className="max-w-7xl mx-auto px-4 py-10">
+          <Link to="/menu" style={{ color: "#1890ff" }}>
+            &larr; Quay lại thực đơn
+          </Link>
+
+          <div className="grid md:grid-cols-2 gap-8 mt-6">
+            <Image src={item.image} alt={item.name} width="100%" height={400} style={{ objectFit: "cover", borderRadius: 8 }} />
+
+            <div>
+              <Title level={2}>{item.name}</Title>
+              <Rate disabled defaultValue={averageRating} />
+              <Text type="secondary"> ({reviews.length} đánh giá)</Text>
+
+              <Title level={3} style={{ color: "#1677ff", marginTop: 16 }}>
                 {item.price.toLocaleString()} ₫
+              </Title>
+
+              <Paragraph>{item.fullDescription || item.description}</Paragraph>
+
+              <div className="flex items-center gap-2 mt-4">
+                <Button onClick={() => setQuantity(Math.max(1, quantity - 1))}>-</Button>
+                <Input value={quantity} style={{ width: 60, textAlign: "center" }} readOnly />
+                <Button onClick={() => setQuantity(quantity + 1)}>+</Button>
               </div>
-              
-              <p className="text-gray-700">
-                {item.fullDescription || item.description}
-              </p>
-              
-              <div className="pt-6">
-                <div className="flex items-center gap-4">
-                  <div className="flex border rounded mr-2">
-                    <button
-                      className="px-3 py-2 border-r hover:bg-gray-100"
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    >
-                      -
-                    </button>
-                    <span className="px-4 py-2">{quantity}</span>
-                    <button
-                      className="px-3 py-2 border-l hover:bg-gray-100"
-                      onClick={() => setQuantity(quantity + 1)}
-                    >
-                      +
-                    </button>
-                  </div>
-                  <Button 
-                    onClick={handleAddToCart}
-                    className="bg-primary hover:bg-primary/90 flex items-center gap-2"
-                  >
-                    <ShoppingCart className="h-4 w-4" />
-                    <span>Thêm vào giỏ hàng</span>
-                  </Button>
-                </div>
-              </div>
-              
-              <div className="pt-6 border-t">
-                <h3 className="text-lg font-semibold">Danh mục:</h3>
-                <p className="capitalize">{item.category}</p>
-              </div>
+
+              <Button
+                type="primary"
+                icon={<ShoppingCartOutlined />}
+                className="mt-4"
+                onClick={handleAddToCart}
+              >
+                Thêm vào giỏ hàng
+              </Button>
+
+              <Divider />
+              <Text strong>Danh mục: </Text>
+              <Text>{item.category}</Text>
             </div>
           </div>
-          
+
           <div className="mt-16">
-            <h2 className="text-2xl font-bold mb-6 flex items-center">
-              <MessageSquare className="h-6 w-6 mr-2" /> Đánh giá và bình luận
-            </h2>
-            
-            <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-              <h3 className="text-xl font-semibold mb-4">Đánh giá món ăn này</h3>
-              <form onSubmit={handleSubmitReview}>
-                <div className="flex flex-wrap gap-4 mb-4">
-                  <div className="flex-1 min-w-[250px]">
-                    <label htmlFor="name" className="block mb-1">Tên của bạn</label>
-                    <Input
-                      id="name"
-                      value={newReview.name}
-                      onChange={(e) => setNewReview({ ...newReview, name: e.target.value })}
-                      placeholder="Nhập tên của bạn"
-                      required
-                    />
-                  </div>
-                  
-                  <div className="min-w-[250px]">
-                    <label className="block mb-1">Đánh giá</label>
-                    <div className="flex items-center gap-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star 
-                          key={star}
-                          className={`h-6 w-6 cursor-pointer ${star <= newReview.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-                          onClick={() => setNewReview({ ...newReview, rating: star })}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="mb-4">
-                  <label htmlFor="comment" className="block mb-1">Bình luận của bạn</label>
-                  <Textarea
-                    id="comment"
+            <Title level={3}>
+              <MessageOutlined /> Đánh giá và bình luận
+            </Title>
+
+            <Card className="mb-8" title="Đánh giá món ăn này">
+              <Form layout="vertical" onFinish={handleSubmitReview}>
+                <Form.Item label="Tên của bạn" required>
+                  <Input
+                    value={newReview.name}
+                    onChange={(e) => setNewReview({ ...newReview, name: e.target.value })}
+                    placeholder="Nhập tên"
+                  />
+                </Form.Item>
+
+                <Form.Item label="Đánh giá" required>
+                  <Rate
+                    value={newReview.rating}
+                    onChange={(value) => setNewReview({ ...newReview, rating: value })}
+                  />
+                </Form.Item>
+
+                <Form.Item label="Bình luận" required>
+                  <Input.TextArea
+                    rows={4}
                     value={newReview.comment}
                     onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
-                    placeholder="Chia sẻ trải nghiệm của bạn về món ăn này..."
-                    rows={4}
-                    required
+                    placeholder="Chia sẻ trải nghiệm của bạn..."
                   />
-                </div>
-                
-                <Button type="submit" className="bg-primary hover:bg-primary/90">
-                  Gửi đánh giá
-                </Button>
-              </form>
-            </div>
-            
-            <div className="space-y-6">
-              {reviews.length === 0 ? (
-                <p className="text-center text-gray-500 py-8">
-                  Chưa có đánh giá nào. Hãy là người đầu tiên đánh giá món ăn này!
-                </p>
-              ) : (
-                reviews.map((review) => (
-                  <div key={review.id} className="bg-white p-6 rounded-lg shadow-md">
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <h4 className="font-semibold">{review.name}</h4>
-                        <div className="flex items-center gap-1">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <Star 
-                              key={star}
-                              className={`h-4 w-4 ${star <= review.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                      <span className="text-sm text-gray-500">{review.date}</span>
+                </Form.Item>
+
+                <Form.Item>
+                  <Button type="primary" htmlType="submit">
+                    Gửi đánh giá
+                  </Button>
+                </Form.Item>
+              </Form>
+            </Card>
+
+            {reviews.length === 0 ? (
+              <Text type="secondary">Chưa có đánh giá nào.</Text>
+            ) : (
+              reviews.map((r) => (
+                <Card key={r.id} className="mb-4">
+                  <div className="flex justify-between">
+                    <div>
+                      <Text strong>{r.name}</Text>
+                      <br />
+                      <Rate disabled defaultValue={r.rating} />
                     </div>
-                    <p className="text-gray-700">{review.comment}</p>
+                    <Text type="secondary">{r.date}</Text>
                   </div>
-                ))
-              )}
-            </div>
+                  <Paragraph className="mt-2">{r.comment}</Paragraph>
+                </Card>
+              ))
+            )}
           </div>
         </div>
       </main>
-      
       <Footer />
     </div>
   );

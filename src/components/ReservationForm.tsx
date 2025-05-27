@@ -15,6 +15,8 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import dayjs from "dayjs";
+
 
 const { Option } = Select;
 
@@ -210,27 +212,28 @@ const ReservationForm = () => {
         />
       </Form.Item>
 
-      <Form.Item label="Ngày">
-        <Controller
-          control={control}
-          name="date"
-          render={({ field, fieldState }) => (
-            <>
-              <DatePicker
-                {...field}
-                format="DD/MM/YYYY"
-                style={{ width: "100%" }}
-                onChange={(date) => field.onChange(date ?? undefined)}
-              />
-              {fieldState.error && (
-                <div className="text-red-500 text-xs">
-                  {fieldState.error.message}
-                </div>
-              )}
-            </>
-          )}
+<Form.Item label="Ngày">
+  <Controller
+    control={control}
+    name="date"
+    render={({ field, fieldState }) => (
+      <>
+        <DatePicker
+          {...field}
+          format="DD/MM/YYYY"
+          style={{ width: "100%" }}
+          value={field.value ? dayjs(field.value) : null} // đảm bảo là dayjs
+          onChange={(date) => field.onChange(date ? date.toISOString() : null)} // lưu ISO string hoặc bạn có thể lưu dayjs object tùy nhu cầu
         />
-      </Form.Item>
+        {fieldState.error && (
+          <div className="text-red-500 text-xs">
+            {fieldState.error.message}
+          </div>
+        )}
+      </>
+    )}
+  />
+</Form.Item>
 
       <Form.Item label="Giờ">
         <Controller

@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs } from "antd";
+import type { TabsProps } from "antd";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import FoodCard from "@/components/FoodCard";
@@ -157,14 +159,12 @@ const foodItems = [
     category: "drinks"
   }
 ];
-
 const Menu = () => {
   const [selectedCategory, setSelectedCategory] = useState("appetizers");
-  const [cartItems, setCartItems] = useState<{item: any, quantity: number}[]>([]);
+  const [cartItems, setCartItems] = useState<{ item: any; quantity: number }[]>([]);
   const { toast } = useToast();
-  
+
   useEffect(() => {
-    // Load cart items from localStorage
     const savedCart = localStorage.getItem("cart");
     if (savedCart) {
       try {
@@ -174,44 +174,45 @@ const Menu = () => {
       }
     }
   }, []);
-  
-  const filteredItems = foodItems.filter(item => item.category === selectedCategory);
-  
+
   const handleAddToCart = (item: any, quantity: number) => {
-    const existingItemIndex = cartItems.findIndex(cartItem => cartItem.item.id === item.id);
-    
+    const existingItemIndex = cartItems.findIndex((cartItem) => cartItem.item.id === item.id);
+
+    let updatedCartItems;
     if (existingItemIndex > -1) {
-      const updatedCartItems = [...cartItems];
+      updatedCartItems = [...cartItems];
       updatedCartItems[existingItemIndex].quantity += quantity;
-      setCartItems(updatedCartItems);
     } else {
-      setCartItems([...cartItems, { item, quantity }]);
+      updatedCartItems = [...cartItems, { item, quantity }];
     }
-    
-    // Save to localStorage
-    const updatedCart = existingItemIndex > -1 
-      ? cartItems.map(cartItem => 
-          cartItem.item.id === item.id 
-            ? { ...cartItem, quantity: cartItem.quantity + quantity } 
-            : cartItem
-        )
-      : [...cartItems, { item, quantity }];
-    
-    localStorage.setItem('cart', JSON.stringify(updatedCart));
-    
-    // Dispatch custom event để Navbar có thể cập nhật số lượng
-    window.dispatchEvent(new Event('cartUpdated'));
-    
+
+    setCartItems(updatedCartItems);
+    localStorage.setItem("cart", JSON.stringify(updatedCartItems));
+    window.dispatchEvent(new Event("cartUpdated"));
+
     toast({
       title: "Đã thêm vào giỏ hàng",
       description: `${quantity} x ${item.name}`,
     });
   };
 
+  const items: TabsProps["items"] = categories.map((category) => ({
+    key: category.id,
+    label: category.name,
+    children: (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4">
+        {foodItems
+          .filter((item) => item.category === category.id)
+          .map((item) => (
+            <FoodCard key={item.id} item={item} onAddToCart={handleAddToCart} />
+          ))}
+      </div>
+    ),
+  }));
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
-      
       <main className="flex-grow">
         <div className="bg-primary/10 py-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -221,38 +222,20 @@ const Menu = () => {
             </p>
           </div>
         </div>
-        
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <Tabs defaultValue="appetizers" value={selectedCategory} onValueChange={setSelectedCategory}>
-            <TabsList className="mb-8 flex overflow-x-auto pb-2 justify-start">
-              {categories.map(category => (
-                <TabsTrigger 
-                  key={category.id} 
-                  value={category.id}
-                  className="px-4 py-2 focus:bg-primary focus:text-white"
-                >
-                  {category.name}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-            
-            {categories.map(category => (
-              <TabsContent key={category.id} value={category.id} className="pt-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredItems.map(item => (
-                    <FoodCard 
-                      key={item.id} 
-                      item={item} 
-                      onAddToCart={handleAddToCart}
-                    />
-                  ))}
-                </div>
-              </TabsContent>
-            ))}
-          </Tabs>
+          <Tabs
+            defaultActiveKey="appetizers"
+            activeKey={selectedCategory}
+            onChange={setSelectedCategory}
+            tabPosition="top"
+            type="line"
+            size="large"
+            className="custom-tabs"
+            items={items}
+          />
         </div>
       </main>
-      
       <Footer />
     </div>
   );
